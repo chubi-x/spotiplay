@@ -14,26 +14,36 @@
 
     <h2 class="text-[#9eb7a8] text-xl font-semibold mb-2">Your Playlists</h2>
     {% if playlists %}
-        <ul>
+      <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 list-none p-0" role="list" aria-label="Your playlists">
         {% for playlist in playlists %}
-            <li class="text-[#9eb7a8]">
-                <a href="{{ url_for('playlist_detail', playlist_id=playlist.id) }}" class="text-[#9eb7a8] underline hover:text-white"><strong>{{ playlist.name }}</strong></a> ({{ playlist.tracks.total }} tracks)
-                {% if playlist.images and playlist.images[0].url %}
-                    <br><img src="{{ playlist.images[0].url }}" alt="cover" width="100">
-                {% endif %}
-                <form hx-post="/add_playlist_to_library/{{ playlist.id }}" hx-target="#add-result-{{ playlist.id }}" hx-swap="innerHTML" style="display:inline; margin-left:10px;">
-                    <button type="submit" class="text-[#9eb7a8] border border-[#38e07b] px-2 py-1 rounded hover:bg-[#38e07b] hover:text-[#111714]">Add All Tracks to Library</button>
-                </form>
-                <div id="add-result-{{ playlist.id }}"></div>
-            </li>
+          <li class="bg-[#181e1b] rounded-lg shadow hover:shadow-lg transition-shadow flex flex-col items-center p-4 focus-within:ring-2 focus-within:ring-[#38e07b]" tabindex="0">
+            <figure class="flex flex-col items-center w-full">
+              {% if playlist.images and playlist.images[0].url %}
+                <img src="{{ playlist.images[0].url }}"
+                     alt="Playlist cover for {{ playlist.name }}"
+                     class="rounded w-full aspect-square object-cover mb-3"
+                     width="200" height="200"
+                >
+              {% endif %}
+              <figcaption class="text-center w-full mb-2">
+                <a href="{{ url_for('playlist_detail', playlist_id=playlist.id) }}"
+                   class="block text-lg font-semibold text-[#9eb7a8] underline hover:text-white truncate" title="{{ playlist.name }}">{{ playlist.name }}</a>
+                <span class="block text-sm text-[#9eb7a8] truncate" title="{{ playlist.tracks.total }} tracks">{{ playlist.tracks.total }} tracks</span>
+              </figcaption>
+              <form hx-post="/add_playlist_to_library/{{ playlist.id }}" hx-target="#add-result-{{ playlist.id }}" hx-swap="innerHTML" class="w-full flex justify-center">
+                <button type="submit" class="text-[#9eb7a8] border border-[#38e07b] px-2 py-1 rounded hover:bg-[#38e07b] hover:text-[#181e1b] focus:outline-none focus:ring-2 focus:ring-[#38e07b]" aria-label="Add all tracks from {{ playlist.name }} to library">Add All Tracks to Library</button>
+              </form>
+              <div id="add-result-{{ playlist.id }}"></div>
+            </figure>
+          </li>
         {% endfor %}
-        </ul>
+      </ul>
     {% else %}
-        <p class="text-[#9eb7a8]">No playlists found.</p>
+      <p class="text-[#9eb7a8]">No playlists found.</p>
     {% endif %}
 
-    <h2 class="text-[#9eb7a8] text-2xl font-bold mb-4">Your Albums</h2>
     <div id="albums-container">
+      <h2 class="text-[#9eb7a8] text-2xl font-bold mb-4">Your Albums</h2>
       {% if albums %}
         <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 list-none p-0" role="list" aria-label="Your saved albums">
           {% for album in albums %}

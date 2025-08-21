@@ -1,0 +1,36 @@
+<div id="albums-container">
+  <h2 class="text-[#9eb7a8] text-2xl font-bold mb-4">Your Albums</h2>
+  {% if albums %}
+    <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 list-none p-0" role="list" aria-label="Your saved albums">
+      {% for album in albums %}
+        <li class="bg-[#181e1b] rounded-lg shadow hover:shadow-lg transition-shadow flex flex-col items-center p-4 focus-within:ring-2 focus-within:ring-[#38e07b]" tabindex="0">
+          <figure class="flex flex-col items-center w-full">
+            {% if album.album.images and album.album.images[0].url %}
+              <img src="{{ album.album.images[0].url }}"
+                   alt="Album cover for {{ album.album.name }} by {{ album.album.artists[0].name }}"
+                   class="rounded w-full aspect-square object-cover mb-3"
+                   width="200" height="200"
+              >
+            {% endif %}
+            <figcaption class="text-center w-full">
+              <span class="block text-lg font-semibold text-[#9eb7a8] truncate" title="{{ album.album.name }}">{{ album.album.name }}</span>
+              <span class="block text-sm text-[#9eb7a8] truncate" title="{{ album.album.artists[0].name }}">{{ album.album.artists[0].name }}</span>
+            </figcaption>
+          </figure>
+        </li>
+      {% endfor %}
+    </ul>
+    <div class="flex items-center justify-center gap-4 mt-6" role="navigation" aria-label="Album pagination">
+      {% if prev_album_offset is not none %}
+        <button hx-get="{{ url_for('dashboard') }}?album_offset={{ prev_album_offset }}" hx-target="#albums-container" hx-swap="outerHTML" class="px-4 py-2 rounded bg-[#29382f] text-[#9eb7a8] focus:outline-none focus:ring-2 focus:ring-[#38e07b]" aria-label="Previous albums page">Previous</button>
+      {% endif %}
+      <span class="text-[#9eb7a8] text-base">Albums {{ album_offset + 1 }}-{{ album_offset + albums|length }} of {{ total_albums }}</span>
+      {% if next_album_offset is not none %}
+        <button hx-get="{{ url_for('dashboard') }}?album_offset={{ next_album_offset }}" hx-target="#albums-container" hx-swap="outerHTML" class="px-4 py-2 rounded bg-[#38e07b] text-[#181e1b] font-bold focus:outline-none focus:ring-2 focus:ring-[#38e07b]" aria-label="Next albums page">Next</button>
+      {% endif %}
+    </div>
+  {% else %}
+    <p>No albums found.</p>
+  {% endif %}
+</div>
+
