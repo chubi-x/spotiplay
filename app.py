@@ -258,6 +258,11 @@ def add_album_to_library(album_id):
         message = 'Failed to add album.'
     return render_template('htmx_add_result.html', message=message)
 
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
+
 if __name__ == '__main__':
     app.run(debug=True)
 
