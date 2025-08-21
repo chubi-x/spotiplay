@@ -3,6 +3,25 @@ from flask import Flask, render_template, redirect, url_for, request, session
 from dotenv import load_dotenv
 import requests
 
+# Spotify API URLs
+SPOTIFY_API = {
+    'auth': {
+        'authorize': 'https://accounts.spotify.com/authorize',
+        'token': 'https://accounts.spotify.com/api/token'
+    },
+    'user': {
+        'profile': 'https://api.spotify.com/v1/me',
+        'playlists': 'https://api.spotify.com/v1/me/playlists',
+        'albums': 'https://api.spotify.com/v1/me/albums',
+        'tracks': 'https://api.spotify.com/v1/me/tracks',
+        'check_saved_albums': 'https://api.spotify.com/v1/me/albums/contains'
+    },
+    'playlists': {
+        'get': 'https://api.spotify.com/v1/playlists/{playlist_id}',
+        'tracks': 'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
+    }
+}
+
 def fetch_spotify_items_with_pagination(endpoint, token, offset=0, limit=20, item_key="items"):
     """
     Utility to fetch paginated data from Spotify API.
@@ -36,7 +55,7 @@ def index():
 def login():
     scope = 'user-library-read user-library-modify playlist-read-private user-read-email'
     auth_url = (
-        'https://accounts.spotify.com/authorize?'
+        f'{SPOTIFY_API["auth"]["authorize"]}?'
         f'client_id={SPOTIFY_CLIENT_ID}'
         f'&response_type=code'
         f'&redirect_uri={SPOTIFY_REDIRECT_URI}'
@@ -47,7 +66,7 @@ def login():
 @app.route('/callback')
 def callback():
     code = request.args.get('code')
-    token_url = 'https://accounts.spotify.com/api/token'
+    token_url = SPOTIFY_API['auth']['token']
     payload = {
         'grant_type': 'authorization_code',
         'code': code,
@@ -72,13 +91,13 @@ def dashboard():
 
     # Fetch user profile from Spotify
     user_profile = None
-    profile_resp = requests.get('https://api.spotify.com/v1/me', headers=headers)
+    profile_resp = requests.get(SPOTIFY_API['user']['profile'], headers=headers)
     if profile_resp.status_code == 200:
         user_profile = profile_resp.json()
 
     # Fetch user playlists from Spotify
     playlists = []
-    resp = requests.get('https://api.spotify.com/v1/me/playlists', headers=headers)
+    resp = requests.get(SPOTIFY_API['user']['playlists'], headers=headers)
     if resp.status_code == 200:
         data = resp.json()
         playlists = data.get('items', [])
@@ -92,7 +111,7 @@ def dashboard():
         album_offset = 0
     album_limit = 20
     albums, total_albums, next_album_offset, prev_album_offset = fetch_spotify_items_with_pagination(
-        'https://api.spotify.com/v1/me/albums',
+        SPOTIFY_API['user']['albums'],
         session['spotify_token'],
         offset=album_offset, limit=album_limit, item_key='items')
 
@@ -122,12 +141,12 @@ def playlist_detail(playlist_id):
         offset = 0
     limit = 50
     # Fetch playlist details
-    playlist_resp = requests.get(f'https://api.spotify.com/v1/playlists/{playlist_id}', headers=headers)
+    playlist_resp = requests.get(SPOTIFY_API['playlists']['get'].format(playlist_id=playlist_id), headers=headers)
     if playlist_resp.status_code != 200:
         return "Failed to fetch playlist", 400
     playlist = playlist_resp.json()
     # Fetch just one page of tracks
-    tracks_url = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks?fields=items(track(id,name,artists,album,external_urls)),total,next,previous&offset={offset}&limit={limit}'
+    tracks_url = f"{SPOTIFY_API['playlists']['tracks'].format(playlist_id=playlist_id)}?fields=items(track(id,name,artists,album,external_urls)),total,next,previous&offset={offset}&limit={limit}"
     track_resp = requests.get(tracks_url, headers=headers)
     tracks = []
     total_tracks = 0
@@ -189,7 +208,7 @@ def add_playlist_to_library(playlist_id):
     headers = {'Authorization': f"Bearer {session['spotify_token']}"}
     # Step 1: Fetch all track IDs from the playlist (handle pagination)
     track_ids = []
-    url = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks?fields=items(track(id)),next&limit=100'
+    url = f"{SPOTIFY_API['playlists']['tracks'].format(playlist_id=playlist_id)}?fields=items(track(id)),next&limit=100"
     while url:
         resp = requests.get(url, headers=headers)
         if resp.status_code != 200:
@@ -205,7 +224,7 @@ def add_playlist_to_library(playlist_id):
     failed = False
     for i in range(0, len(track_ids), batch_size):
         batch = track_ids[i:i+batch_size]
-        save_url = 'https://api.spotify.com/v1/me/tracks'
+        save_url = SPOTIFY_API['user']['tracks']
         save_resp = requests.put(save_url, headers={**headers, 'Content-Type': 'application/json'}, json={'ids': batch})
         if save_resp.status_code not in (200, 201):
             failed = True
@@ -217,7 +236,7 @@ def add_track_to_library(track_id):
     if 'spotify_token' not in session:
         return jsonify({'success': False, 'message': 'Not authenticated'}), 401
     headers = {'Authorization': f"Bearer {session['spotify_token']}"}
-    save_url = 'https://api.spotify.com/v1/me/tracks'
+    save_url = SPOTIFY_API['user']['tracks']
     resp = requests.put(save_url, headers={**headers, 'Content-Type': 'application/json'}, json={'ids': [track_id]})
     if resp.status_code in (200, 201):
         message = 'Added to your library!'
@@ -230,7 +249,7 @@ def add_album_to_library(album_id):
     if 'spotify_token' not in session:
         return jsonify({'success': False, 'message': 'Not authenticated'}), 401
     headers = {'Authorization': f"Bearer {session['spotify_token']}"}
-    save_url = 'https://api.spotify.com/v1/me/albums'
+    save_url = SPOTIFY_API['user']['albums']
     resp = requests.put(save_url, headers={**headers, 'Content-Type': 'application/json'}, json={'ids': [album_id]})
     if resp.status_code in (200, 201):
         message = 'Album added to your library!'
