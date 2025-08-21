@@ -13,50 +13,6 @@
     <div id="add-all-result"></div>
     <hr>
     <h2>Tracks</h2>
-    <div id="tracks-container">
-    {% if tracks %}
-        <ol>
-        {% set seen_albums = {} %}
-        {% for track in tracks %}
-            <li>
-                <div style="display:flex;align-items:center;gap:10px;">
-                    {% if track.album and track.album.images and track.album.images[0].url %}
-                        <img src="{{ track.album.images[0].url }}" alt="album cover" width="48">
-                    {% endif %}
-                    <span>
-                        <strong>{{ track.name }}</strong> by {{ track.artists[0].name }}
-                        {% if track.external_urls.spotify %}
-                            <a href="{{ track.external_urls.spotify }}" target="_blank">(Open in Spotify)</a>
-                        {% endif %}
-                    </span>
-                    <form hx-post="/add_track_to_library/{{ track.id }}" hx-target="#add-track-{{ track.id }}" hx-swap="innerHTML" style="margin-left:10px;">
-                        <button type="submit">Add to Library</button>
-                    </form>
-                    <div id="add-track-{{ track.id }}"></div>
-                    
-                    {% if track.album and track.album.id and track.album.id not in seen_albums and not saved_albums.get(track.album.id, False) %}
-                        {% set _ = seen_albums.update({track.album.id: True}) %}
-                        <form hx-post="/add_album_to_library/{{ track.album.id }}" hx-target="#add-album-{{ track.album.id }}" hx-swap="innerHTML" style="margin-left:10px;">
-                            <button type="submit">Add Album</button>
-                        </form>
-                        <div id="add-album-{{ track.album.id }}"></div>
-                    {% endif %}
-                </div>
-            </li>
-        {% endfor %}
-        </ol>
-        <div style="margin-top: 1em;">
-            {% if prev_offset is not none %}
-                <button hx-get="{{ url_for('playlist_detail', playlist_id=playlist.id) }}?offset={{ prev_offset }}" hx-target="#tracks-container" hx-swap="outerHTML">Previous</button>
-            {% endif %}
-            <span style="margin: 0 12px;">Tracks {{ offset + 1 }}-{{ offset + tracks|length }} of {{ total_tracks }}</span>
-            {% if next_offset is not none %}
-                <button hx-get="{{ url_for('playlist_detail', playlist_id=playlist.id) }}?offset={{ next_offset }}" hx-target="#tracks-container" hx-swap="outerHTML">Next</button>
-            {% endif %}
-        </div>
-    {% else %}
-        <p>No tracks found.</p>
-    {% endif %}
-    </div>
+    {% include '_tracks_fragment.html' %}
 {% endblock %}
 

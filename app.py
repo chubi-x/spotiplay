@@ -188,9 +188,10 @@ def playlist_detail(playlist_id):
                     results = check_resp.json()
                     for album_id, is_saved in zip(batch, results):
                         saved_albums[album_id] = is_saved
-    
+
+    template_name = '_tracks_fragment.html' if request.headers.get('HX-Request') == 'true' else 'playlist_detail.html'
     return render_template(
-        'playlist_detail.html', 
+        template_name,
         playlist=playlist, 
         tracks=tracks, 
         offset=offset, 
