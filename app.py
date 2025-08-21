@@ -3,6 +3,22 @@ from flask import Flask, render_template, redirect, url_for, request, session
 from dotenv import load_dotenv
 import requests
 
+def fetch_spotify_items_with_pagination(endpoint, token, offset=0, limit=20, item_key="items"):
+    """
+    Utility to fetch paginated data from Spotify API.
+    Returns: items, total, next_offset, prev_offset
+    """
+    headers = {'Authorization': f"Bearer {token}"}
+    resp = requests.get(f"{endpoint}?limit={limit}&offset={offset}", headers=headers)
+    if resp.status_code != 200:
+        return [], 0, None, None
+    data = resp.json()
+    items = data.get(item_key, [])
+    total = data.get('total', 0)
+    next_offset = offset + limit if offset + limit < total else None
+    prev_offset = offset - limit if offset - limit >= 0 else (0 if offset > 0 else None)
+    return items, total, next_offset, prev_offset
+
 load_dotenv()
 
 SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
@@ -69,16 +85,28 @@ def dashboard():
     else:
         playlists = None
 
-    # Fetch user albums from Spotify
-    albums = []
-    album_resp = requests.get('https://api.spotify.com/v1/me/albums?limit=20', headers=headers)
-    if album_resp.status_code == 200:
-        album_data = album_resp.json()
-        albums = album_data.get('items', [])
-    else:
-        albums = None
+    # Paginate user albums
+    try:
+        album_offset = int(request.args.get('album_offset', 0))
+    except ValueError:
+        album_offset = 0
+    album_limit = 20
+    albums, total_albums, next_album_offset, prev_album_offset = fetch_spotify_items_with_pagination(
+        'https://api.spotify.com/v1/me/albums',
+        session['spotify_token'],
+        offset=album_offset, limit=album_limit, item_key='items')
 
-    return render_template('dashboard.html', playlists=playlists, albums=albums, user_profile=user_profile)
+    return render_template(
+        'dashboard.html',
+        playlists=playlists,
+        albums=albums,
+        user_profile=user_profile,
+        album_offset=album_offset,
+        album_limit=album_limit,
+        total_albums=total_albums,
+        next_album_offset=next_album_offset,
+        prev_album_offset=prev_album_offset
+    )
 
 from flask import jsonify
 
@@ -87,24 +115,72 @@ def playlist_detail(playlist_id):
     if 'spotify_token' not in session:
         return redirect(url_for('login'))
     headers = {'Authorization': f"Bearer {session['spotify_token']}"}
+    # Get pagination params
+    try:
+        offset = int(request.args.get('offset', 0))
+    except ValueError:
+        offset = 0
+    limit = 50
     # Fetch playlist details
     playlist_resp = requests.get(f'https://api.spotify.com/v1/playlists/{playlist_id}', headers=headers)
     if playlist_resp.status_code != 200:
         return "Failed to fetch playlist", 400
     playlist = playlist_resp.json()
-    # Gather all tracks (handle pagination)
+    # Fetch just one page of tracks
+    tracks_url = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks?fields=items(track(id,name,artists,album,external_urls)),total,next,previous&offset={offset}&limit={limit}'
+    track_resp = requests.get(tracks_url, headers=headers)
     tracks = []
-    url = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks?fields=items(track(id,name,artists,album,external_urls)),next&limit=100'
-    while url:
-        track_resp = requests.get(url, headers=headers)
-        if track_resp.status_code != 200:
-            break
+    total_tracks = 0
+    next_offset = None
+    prev_offset = None
+    saved_albums = {}
+    if track_resp.status_code == 200:
         data = track_resp.json()
         for item in data.get('items', []):
             if item.get('track'):
                 tracks.append(item['track'])
-        url = data.get('next')
-    return render_template('playlist_detail.html', playlist=playlist, tracks=tracks)
+        total_tracks = playlist['tracks']['total']
+        # Pagination
+        if offset + limit < total_tracks:
+            next_offset = offset + limit
+        if offset - limit >= 0:
+            prev_offset = offset - limit
+        elif offset > 0:
+            prev_offset = 0
+        
+        # Extract unique album IDs to check if they're in the user's library
+        unique_album_ids = []
+        seen_album_ids = set()
+        for track in tracks:
+            album = track.get('album')
+            if album and album.get('id') and album['id'] not in seen_album_ids:
+                unique_album_ids.append(album['id'])
+                seen_album_ids.add(album['id'])
+        
+        # Check which albums are in the user's library
+        saved_albums = {}
+        if unique_album_ids:
+            # Spotify API allows checking up to 50 IDs at once
+            for i in range(0, len(unique_album_ids), 50):
+                batch = unique_album_ids[i:i+50]
+                check_url = f"https://api.spotify.com/v1/me/albums/contains?ids={','.join(batch)}"
+                check_resp = requests.get(check_url, headers=headers)
+                if check_resp.status_code == 200:
+                    results = check_resp.json()
+                    for album_id, is_saved in zip(batch, results):
+                        saved_albums[album_id] = is_saved
+    
+    return render_template(
+        'playlist_detail.html', 
+        playlist=playlist, 
+        tracks=tracks, 
+        offset=offset, 
+        limit=limit, 
+        total_tracks=total_tracks, 
+        next_offset=next_offset, 
+        prev_offset=prev_offset,
+        saved_albums=saved_albums
+    )
 
 @app.route('/add_playlist_to_library/<playlist_id>', methods=['POST'])
 def add_playlist_to_library(playlist_id):
@@ -147,6 +223,19 @@ def add_track_to_library(track_id):
         message = 'Added to your library!'
     else:
         message = 'Failed to add track.'
+    return render_template('htmx_add_result.html', message=message)
+
+@app.route('/add_album_to_library/<album_id>', methods=['POST'])
+def add_album_to_library(album_id):
+    if 'spotify_token' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'}), 401
+    headers = {'Authorization': f"Bearer {session['spotify_token']}"}
+    save_url = 'https://api.spotify.com/v1/me/albums'
+    resp = requests.put(save_url, headers={**headers, 'Content-Type': 'application/json'}, json={'ids': [album_id]})
+    if resp.status_code in (200, 201):
+        message = 'Album added to your library!'
+    else:
+        message = 'Failed to add album.'
     return render_template('htmx_add_result.html', message=message)
 
 if __name__ == '__main__':
