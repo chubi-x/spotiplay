@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Spotiplay - Listen Smarter{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center flex-1 min-h-[60vh]">
+  <div class="mb-8">
+    <!-- SVG Icon / Graphic -->
+    <svg width="120" height="120" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-[#38e07b]">
+      <path d="M6 6H42L36 24L42 42H6L12 24L6 6Z" fill="currentColor"></path>
+    </svg>
+  </div>
+  <h1 class="text-3xl font-extrabold text-white mb-4 text-center">Welcome to Spotiplay</h1>
+  <p class="text-lg text-[#9eb7a8] mb-8 text-center max-w-xl">Effortlessly manage your Spotify playlists and saved songs. Explore, add, and organize your music library with ease.</p>
+  <a href="{{ url_for('login') }}" class="inline-block rounded-full bg-[#38e07b] text-[#111714] px-8 py-4 font-bold text-lg shadow-xl hover:bg-[#2ed16a] transition-colors">
+    Log in with Spotify
+  </a>
+</div>
+{% endblock %}
+
