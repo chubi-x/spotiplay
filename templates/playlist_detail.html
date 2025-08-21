@@ -13,6 +13,7 @@
     <div id="add-all-result"></div>
     <hr>
     <h2>Tracks</h2>
+    <div id="tracks-container">
     {% if tracks %}
         <ol>
         {% set seen_albums = {} %}
@@ -56,5 +57,6 @@
     {% else %}
         <p>No tracks found.</p>
     {% endif %}
+    </div>
 {% endblock %}
 
