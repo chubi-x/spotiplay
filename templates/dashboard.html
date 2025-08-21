@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Spotify Dashboard{% endblock %}
+{% block content %}
+    <h1>Spotify Dashboard</h1>
+    {% if user_profile %}
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+            {% if user_profile.images and user_profile.images[0].url %}
+                <img src="{{ user_profile.images[0].url }}" alt="Profile picture" width="64" height="64" style="border-radius:32px;">
+            {% endif %}
+            <span style="font-size:1.2em;">Welcome, {{ user_profile.display_name or user_profile.id }}!</span>
+        </div>
+    {% endif %}
+    <p>You are logged in with Spotify.</p>
+
+    <h2>Your Playlists</h2>
+    {% if playlists %}
+        <ul>
+        {% for playlist in playlists %}
+            <li>
+                <a href="{{ url_for('playlist_detail', playlist_id=playlist.id) }}">
+                    <strong>{{ playlist.name }}</strong>
+                </a> ({{ playlist.tracks.total }} tracks)
+                {% if playlist.images and playlist.images[0].url %}
+                    <br><img src="{{ playlist.images[0].url }}" alt="cover" width="100">
+                {% endif %}
+                <form hx-post="/add_playlist_to_library/{{ playlist.id }}" hx-target="#add-result-{{ playlist.id }}" hx-swap="innerHTML" style="display:inline; margin-left:10px;">
+                    <button type="submit">Add All Tracks to Library</button>
+                </form>
+                <div id="add-result-{{ playlist.id }}"></div>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No playlists found.</p>
+    {% endif %}
+
+    <h2>Your Albums</h2>
+    {% if albums %}
+        <ul>
+        {% for album in albums %}
+            <li>
+                <strong>{{ album.album.name }}</strong> by {{ album.album.artists[0].name }}
+                {% if album.album.images and album.album.images[0].url %}
+                    <br><img src="{{ album.album.images[0].url }}" alt="cover" width="100">
+                {% endif %}
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No albums found.</p>
+    {% endif %}
+{% endblock %}
+

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Spotify App{% endblock %}</title>
+    <!-- htmx -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- Alpine.js -->
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div id="main-container">
+        {% if session.get('spotify_token') %}
+            <a href="{{ url_for('dashboard') }}">Go to Dashboard</a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="btn btn-primary">Login with Spotify</a>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
+

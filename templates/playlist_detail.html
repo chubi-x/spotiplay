@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Playlist Details{% endblock %}
+{% block content %}
+    <h1>{{ playlist.name }}</h1>
+    {% if playlist.images and playlist.images[0].url %}
+        <img src="{{ playlist.images[0].url }}" alt="cover" width="200">
+    {% endif %}
+    <p>{{ playlist.description }}</p>
+    <p>Total tracks: {{ playlist.tracks.total }}</p>
+    <form hx-post="/add_playlist_to_library/{{ playlist.id }}" hx-target="#add-all-result" hx-swap="innerHTML">
+        <button type="submit">Add All Tracks to Library</button>
+    </form>
+    <div id="add-all-result"></div>
+    <hr>
+    <h2>Tracks</h2>
+    {% if tracks %}
+        <ol>
+        {% for track in tracks %}
+            <li>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    {% if track.album and track.album.images and track.album.images[0].url %}
+                        <img src="{{ track.album.images[0].url }}" alt="album cover" width="48">
+                    {% endif %}
+                    <span>
+                        <strong>{{ track.name }}</strong> by {{ track.artists[0].name }}
+                        {% if track.external_urls.spotify %}
+                            <a href="{{ track.external_urls.spotify }}" target="_blank">(Open in Spotify)</a>
+                        {% endif %}
+                    </span>
+                    <form hx-post="/add_track_to_library/{{ track.id }}" hx-target="#add-track-{{ track.id }}" hx-swap="innerHTML" style="margin-left:10px;">
+                        <button type="submit">Add to Library</button>
+                    </form>
+                    <div id="add-track-{{ track.id }}"></div>
+                </div>
+            </li>
+        {% endfor %}
+        </ol>
+    {% else %}
+        <p>No tracks found.</p>
+    {% endif %}
+{% endblock %}
+
