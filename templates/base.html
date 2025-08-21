@@ -1,27 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Spotify App{% endblock %}</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Spotiplay{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin />
+    <link
+      rel="stylesheet"
+      as="style"
+      onload="this.rel='stylesheet'"
+      href="https://fonts.googleapis.com/css2?display=swap&family=Be+Vietnam+Pro:wght@400;500;700;900&family=Noto+Sans:wght@400;500;700;900"
+    />
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <!-- htmx -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <!-- Alpine.js -->
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     {% block head %}{% endblock %}
-</head>
-<body>
-    <div id="main-container">
-        {% if session.get('spotify_token') %}
-            <a href="{{ url_for('dashboard') }}">Go to Dashboard</a>
-            <form action="{{ url_for('logout') }}" method="post" style="display:inline;margin-left:10px;">
-                <button type="submit">Logout</button>
-            </form>
-        {% else %}
-            <a href="{{ url_for('login') }}" class="btn btn-primary">Login with Spotify</a>
-        {% endif %}
-        {% block content %}{% endblock %}
+  </head>
+  <body>
+    <div
+      class="relative flex size-full min-h-screen flex-col bg-[#111714] dark group/design-root overflow-x-hidden"
+      style='font-family: "Be Vietnam Pro", "Noto Sans", sans-serif;'
+    >
+      <div class="layout-container flex h-full grow flex-col">
+        <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#29382f] px-10 py-3">
+          <div class="flex items-center gap-4 text-white">
+            <div class="size-4">
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6H42L36 24L42 42H6L12 24L6 6Z" fill="currentColor"></path></svg>
+            </div>
+            <h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em]">Spotiplay</h2>
+          </div>
+          <div class="flex flex-1 justify-end gap-8">
+            <div class="flex gap-2">
+              {% if session.get('spotify_token') %}
+                <a href="{{ url_for('dashboard') }}" class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-4 bg-[#38e07b] text-[#111714] text-sm font-bold leading-normal tracking-[0.015em]">
+                  <span class="truncate">Dashboard</span>
+                </a>
+                <form action="{{ url_for('logout') }}" method="post">
+                  <button type="submit" class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-4 bg-[#29382f] text-white text-sm font-bold leading-normal tracking-[0.015em]">
+                    <span class="truncate">Logout</span>
+                  </button>
+                </form>
+              {% else %}
+                <a href="{{ url_for('login') }}" class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-4 bg-[#38e07b] text-[#111714] text-sm font-bold leading-normal tracking-[0.015em]">
+                  <span class="truncate">Log in</span>
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </header>
+        <div class="px-40 flex flex-1 justify-center py-5">
+          <div class="layout-content-container flex flex-col max-w-[960px] flex-1">
+            {% block content %}{% endblock %}
+          </div>
+        </div>
+        <footer class="flex justify-center">
+          <div class="flex max-w-[960px] flex-1 flex-col">
+            <footer class="flex flex-col gap-6 px-5 py-10 text-center @container">
+              <div class="flex flex-wrap items-center justify-center gap-6 @[480px]:flex-row @[480px]:justify-around">
+                <a class="text-[#9eb7a8] text-base font-normal leading-normal min-w-40" href="https://github.com/chubi-x/spotiplay">Github</a>
+              </div>
+              <p class="text-[#9eb7a8] text-base font-normal leading-normal">@ 2023 Spotiplay</p>
+            </footer>
+          </div>
+        </footer>
+      </div>
     </div>
-</body>
+  </body>
 </html>
 
