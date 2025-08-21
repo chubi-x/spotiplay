@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template, redirect, url_for, request, session
 from dotenv import load_dotenv
 import requests
+import datetime
 
 # Spotify API URLs
 SPOTIFY_API = {
@@ -114,6 +115,18 @@ def dashboard():
         SPOTIFY_API['user']['albums'],
         session['spotify_token'],
         offset=album_offset, limit=album_limit, item_key='items')
+
+    # Partial response for album pagination (HTMX)
+    if request.headers.get('HX-Request') == 'true':
+        return render_template(
+            '_albums_fragment.html',
+            albums=albums,
+            album_offset=album_offset,
+            album_limit=album_limit,
+            total_albums=total_albums,
+            next_album_offset=next_album_offset,
+            prev_album_offset=prev_album_offset
+        )
 
     return render_template(
         'dashboard.html',
@@ -262,6 +275,10 @@ def add_album_to_library(album_id):
 def logout():
     session.clear()
     return redirect(url_for('index'))
+
+@app.context_processor
+def inject_current_year():
+    return {'current_year': datetime.datetime.now().year}
 
 if __name__ == '__main__':
     app.run(debug=True)
