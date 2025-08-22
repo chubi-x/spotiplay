@@ -8,7 +8,7 @@
                 {% if track.album and track.album.images and track.album.images[0].url %}
                     <img src="{{ track.album.images[0].url }}" alt="album cover" class="w-12 h-12 rounded object-cover" />
                 {% endif %}
-                <span class="flex-1 min-w-0">
+      <span class="flex-1 min-w-0 overflow-hidden">
                     <strong class="text-white truncate">{{ track.name }}</strong>
                     <span class="block text-[#9eb7a8] text-sm truncate">{{ track.artists | map(attribute='name') | join(', ') }}</span>
                     {% if track.external_urls.spotify %}
@@ -30,15 +30,38 @@
         </li>
     {% endfor %}
     </ol>
-    <div class="flex items-center justify-center gap-4 mt-6" role="navigation" aria-label="Track pagination">
-        {% if prev_offset is not none %}
-            <button hx-get="{{ url_for('playlist_detail', playlist_id=playlist.id) }}?offset={{ prev_offset }}" hx-target="#tracks-container" hx-swap="outerHTML" class="px-4 py-2 rounded bg-[#29382f] text-[#9eb7a8] focus:outline-none focus:ring-2 focus:ring-[#38e07b]" aria-label="Previous tracks page">Previous</button>
-        {% endif %}
-        <span class="text-[#9eb7a8] text-base">Tracks {{ offset + 1 }}-{{ offset + tracks|length }} of {{ total_tracks }}</span>
-        {% if next_offset is not none %}
-            <button hx-get="{{ url_for('playlist_detail', playlist_id=playlist.id) }}?offset={{ next_offset }}" hx-target="#tracks-container" hx-swap="outerHTML" class="px-4 py-2 rounded bg-[#38e07b] text-[#181e1b] font-bold focus:outline-none focus:ring-2 focus:ring-[#38e07b]" aria-label="Next tracks page">Next</button>
-        {% endif %}
+    <div class="flex items-center justify-center gap-4 mt-6 relative" role="navigation" aria-label="Track pagination">
+      <!-- Spinner overlay -->
+      <div id="tracks-pagination-spinner" class="absolute left-1/2 -translate-x-1/2 -top-10 hidden pointer-events-none" aria-hidden="true">
+        <svg class="animate-spin h-7 w-7 text-[#38e07b]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="#38e07b" stroke-width="4"></circle>
+          <path class="opacity-75" fill="#38e07b" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+      </div>
+      {% if prev_offset is not none %}
+        <button hx-get="{{ url_for('playlist_detail', playlist_id=playlist.id) }}?offset={{ prev_offset }}" hx-target="#tracks-container" hx-swap="outerHTML" class="rounded-full bg-[#29382f] text-white px-4 py-2 font-bold text-xs shadow hover:bg-[#395645] transition-colors">Previous</button>
+      {% endif %}
+      {% if next_offset is not none %}
+        <button hx-get="{{ url_for('playlist_detail', playlist_id=playlist.id) }}?offset={{ next_offset }}" hx-target="#tracks-container" hx-swap="outerHTML" class="ml-2 rounded-full bg-[#29382f] text-white px-4 py-2 font-bold text-xs shadow hover:bg-[#395645] transition-colors">Next</button>
+      {% endif %}
+      <span class="text-[#9eb7a8] text-xs font-medium">Tracks {{ offset + 1 }}-{{ offset + tracks|length }} of {{ total_tracks }}</span>
     </div>
+    <script>
+      // Spinner for track pagination
+      document.addEventListener('htmx:beforeRequest', function(evt) {
+        if (evt.detail.elt && evt.detail.elt.closest('#tracks-container')) {
+          // Only show spinner for Next/Previous track paginations
+          if (evt.detail.elt.matches('button[hx-get]')) {
+            document.getElementById('tracks-pagination-spinner').classList.remove('hidden');
+          }
+        }
+      });
+      document.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.elt && evt.detail.elt.closest('#tracks-container')) {
+          document.getElementById('tracks-pagination-spinner').classList.add('hidden');
+        }
+      });
+    </script>
 {% else %}
     <p class="text-[#9eb7a8] py-8 text-center">No tracks found.</p>
 {% endif %}

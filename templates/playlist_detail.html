@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block title %}{{ playlist.name }} - Playlist{% endblock %}
 {% block content %}
+<a href="{{ url_for('dashboard') }}" class="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full bg-[#29382f] text-[#9eb7a8] hover:bg-[#395645] focus:outline-none focus:ring-2 focus:ring-[#38e07b] text-sm font-medium w-fit">
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+  Back to Dashboard
+</a>
 <div class="flex flex-wrap justify-between gap-3 p-4">
   <div class="flex min-w-72 flex-col gap-3">
     <div class="flex items-center gap-4">
@@ -30,62 +34,7 @@
   </div>
 </div>
 <div class="px-4 py-3 @container">
-  <table class="w-full text-sm text-left text-[#9eb7a8] bg-[#181e1b] dark:bg-[#181e1b]">
-    <thead class="text-xs text-white uppercase bg-[#1c2620] dark:bg-[#1c2620]">
-      <tr>
-        <th scope="col" class="px-6 py-3">#</th>
-        <th scope="col" class="px-6 py-3">Title</th>
-        <th scope="col" class="px-6 py-3">Album</th>
-        <th scope="col" class="px-6 py-3">Artists</th>
-        <th scope="col" class="px-6 py-3">Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% set seen_albums = {} %}
-      {% for track in tracks %}
-      <tr class="bg-[#181e1b] border-b border-[#29382f] hover:bg-[#232e29]">
-        <td class="px-6 py-4 font-medium text-white whitespace-nowrap">{{ loop.index0 + offset + 1 }}</td>
-        <td class="px-6 py-4">
-          <div class="flex items-center gap-3">
-            {% if track.album and track.album.images and track.album.images[0].url %}
-              <img src="{{ track.album.images[0].url }}" alt="album cover" class="w-10 h-10 rounded-md object-cover">
-            {% endif %}
-            <span class="font-bold text-white">{{ track.name }}</span>
-            {% if track.external_urls.spotify %}
-              <a href="{{ track.external_urls.spotify }}" target="_blank" class="ml-2 text-[#38e07b] text-xs underline">Spotify</a>
-            {% endif %}
-          </div>
-        </td>
-        <td class="px-6 py-4 truncate max-w-xs">{{ track.album.name if track.album else '' }}</td>
-        <td class="px-6 py-4 truncate max-w-xs">{{ track.artists | map(attribute='name') | join(', ') }}</td>
-        <td class="flex items-center px-6 py-4 gap-2">
-          <form hx-post="/add_track_to_library/{{ track.id }}" hx-target="#add-track-{{ track.id }}" hx-swap="innerHTML">
-            <button type="submit" class="rounded-full bg-[#38e07b] text-[#111714] px-3 py-1 font-bold text-xs shadow hover:bg-[#2ed16a] transition-colors">Add</button>
-          </form>
-          <div id="add-track-{{ track.id }}"></div>
-          {% if track.album and track.album.id and track.album.id not in seen_albums and not saved_albums.get(track.album.id, False) %}
-            {% set _ = seen_albums.update({track.album.id: True}) %}
-            <form hx-post="/add_album_to_library/{{ track.album.id }}" hx-target="#add-album-{{ track.album.id }}" hx-swap="innerHTML">
-              <button type="submit" class="rounded-full bg-[#29382f] text-white px-3 py-1 font-bold text-xs shadow hover:bg-[#395645] transition-colors">Add Album</button>
-            </form>
-            <div id="add-album-{{ track.album.id }}"></div>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <div class="mt-6 flex items-center justify-between">
-    <div>
-      {% if prev_offset is not none %}
-        <button hx-get="{{ url_for('playlist_detail', playlist_id=playlist.id) }}?offset={{ prev_offset }}" hx-target="table" hx-swap="outerHTML" class="rounded-full bg-[#29382f] text-white px-4 py-2 font-bold text-xs shadow hover:bg-[#395645] transition-colors">Previous</button>
-      {% endif %}
-      {% if next_offset is not none %}
-        <button hx-get="{{ url_for('playlist_detail', playlist_id=playlist.id) }}?offset={{ next_offset }}" hx-target="table" hx-swap="outerHTML" class="ml-2 rounded-full bg-[#29382f] text-white px-4 py-2 font-bold text-xs shadow hover:bg-[#395645] transition-colors">Next</button>
-      {% endif %}
-    </div>
-    <span class="text-[#9eb7a8] text-xs font-medium">Tracks {{ offset + 1 }}-{{ offset + tracks|length }} of {{ total_tracks }}</span>
-  </div>
+    {% include "_tracks_fragment.html" %}
 </div>
 {% endblock %}
 
