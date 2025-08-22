@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template, redirect, url_for, request, session
 from dotenv import load_dotenv
+from flask import jsonify
 import requests
 import datetime
 
@@ -140,7 +141,6 @@ def dashboard():
         prev_album_offset=prev_album_offset
     )
 
-from flask import jsonify
 
 @app.route('/playlist/<playlist_id>')
 def playlist_detail(playlist_id):
@@ -156,7 +156,8 @@ def playlist_detail(playlist_id):
     # Fetch playlist details
     playlist_resp = requests.get(SPOTIFY_API['playlists']['get'].format(playlist_id=playlist_id), headers=headers)
     if playlist_resp.status_code != 200:
-        return "Failed to fetch playlist", 400
+        from flask import abort
+        abort(400, description="Failed to fetch playlist")
     playlist = playlist_resp.json()
     # Fetch just one page of tracks
     tracks_url = f"{SPOTIFY_API['playlists']['tracks'].format(playlist_id=playlist_id)}?fields=items(track(id,name,artists,album,external_urls)),total,next,previous&offset={offset}&limit={limit}"
@@ -279,6 +280,25 @@ def logout():
 @app.context_processor
 def inject_current_year():
     return {'current_year': datetime.datetime.now().year}
+
+@app.errorhandler(404)
+def not_found(e):
+    if request.headers.get('HX-Request') == 'true':
+        return render_template('_404_fragment.html'), 404
+    return render_template('base.html', content=render_template('_404_fragment.html')), 404
+
+@app.errorhandler(400)
+def bad_request(e):
+    message = getattr(e, 'description', None)
+    if request.headers.get('HX-Request') == 'true':
+        return render_template('_400_fragment.html', message=message), 400
+    return render_template('base.html', content=render_template('_400_fragment.html', message=message)), 400
+
+@app.errorhandler(401)
+def unauthorized(e):
+    if request.headers.get('HX-Request') == 'true':
+        return render_template('_401_fragment.html'), 401
+    return render_template('base.html', content=render_template('_401_fragment.html')), 401
 
 if __name__ == '__main__':
     app.run(debug=True)
