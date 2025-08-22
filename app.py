@@ -51,6 +51,17 @@ SPOTIFY_REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI')
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Random session secret
 toolbar=DebugToolbarExtension(app)
+
+from flask import send_from_directory
+
+@app.route('/favicon.ico')
+def favicon():
+    print("chefll")
+    return send_from_directory(
+        os.path.join(app.root_path, 'static', "favicon"),
+        'favicon.ico',
+        mimetype='image/vnd.microsoft.icon'
+    )
 @app.route('/')
 def index():
     return render_template('index.html')

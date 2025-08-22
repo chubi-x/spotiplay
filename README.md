@@ -53,7 +53,7 @@ Spotiplay is a web application that lets users log in with their Spotify account
 ## Usage
 
 - Click **Login with Spotify** and authorize the app.
-- On the dashboard, browse playlists and albums.
+- On the dashboard, browse playlists.
 - Click any playlist to see all its songs.
 - Use the **Add All Tracks to Library** button to quickly save everything in a playlist to your Spotify library, or use the individual buttons to save specific tracks.
 
