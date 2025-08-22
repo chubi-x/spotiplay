@@ -60,6 +60,26 @@
                          width="200" height="200"
                     >
                   {% endif %}
+      <div id="albums-loading-indicator" class="flex justify-center items-center py-6 hidden">
+        <svg class="animate-spin h-8 w-8 text-[#38e07b]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="#38e07b" stroke-width="4"></circle>
+          <path class="opacity-75" fill="#38e07b" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+      </div>
+
+      <script>
+        document.addEventListener('htmx:beforeRequest', function(evt) {
+          if (evt.detail.elt && evt.detail.elt.closest('#albums-container')) {
+            document.getElementById('albums-loading-indicator').classList.remove('hidden');
+          }
+        });
+        document.addEventListener('htmx:afterSwap', function(evt) {
+          if (evt.detail.elt && evt.detail.elt.closest('#albums-container')) {
+            document.getElementById('albums-loading-indicator').classList.add('hidden');
+          }
+        });
+      </script>
+
                   <figcaption class="text-center w-full">
                     <span class="block text-lg font-semibold text-[#9eb7a8] truncate" title="{{ album.album.name }}">{{ album.album.name }}</span>
                     <span class="block text-sm text-[#9eb7a8] truncate" title="{{ album.album.artists[0].name }}">{{ album.album.artists[0].name }}</span>

@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, redirect, url_for, request, session
+from flask import Flask, render_template, redirect, url_for, request, session, abort
 from dotenv import load_dotenv
 from flask import jsonify
 import requests
@@ -156,7 +156,6 @@ def playlist_detail(playlist_id):
     # Fetch playlist details
     playlist_resp = requests.get(SPOTIFY_API['playlists']['get'].format(playlist_id=playlist_id), headers=headers)
     if playlist_resp.status_code != 200:
-        from flask import abort
         abort(400, description="Failed to fetch playlist")
     playlist = playlist_resp.json()
     # Fetch just one page of tracks
@@ -278,6 +277,16 @@ def logout():
     return redirect(url_for('index'))
 
 @app.context_processor
+
+# Diagnostic test routes for error handling
+@app.route('/trigger-400-error')
+def trigger_400_error():
+    abort(400, description="Bad request: test route for 400 error.")
+
+@app.route('/trigger-401-error')
+def trigger_401_error():
+    abort(401, description="Unauthorized: test route for 401 error.")
+
 def inject_current_year():
     return {'current_year': datetime.datetime.now().year}
 
