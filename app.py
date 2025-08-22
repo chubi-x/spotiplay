@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template, redirect, url_for, request, session, abort
 from dotenv import load_dotenv
 from flask import jsonify
+from flask_debugtoolbar import DebugToolbarExtension
 import requests
 import datetime
 import bleach
@@ -49,7 +50,7 @@ SPOTIFY_REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI')
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Random session secret
-
+toolbar=DebugToolbarExtension(app)
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -324,5 +325,7 @@ def unauthorized(e):
     return render_template('base.html', content=render_template('_401_fragment.html')), 401
 
 if __name__ == '__main__':
+    app.debug = True
+    app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
     app.run(debug=True)
 

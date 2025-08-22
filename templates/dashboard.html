@@ -3,11 +3,11 @@
 {% block content %}
     <h1 class="text-[#9eb7a8] text-3xl font-bold mb-4">Spotify Dashboard</h1>
     {% if user_profile %}
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+        <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 mb-5">
             {% if user_profile.images and user_profile.images[0].url %}
-                <img src="{{ user_profile.images[0].url }}" alt="Profile picture" width="64" height="64" style="border-radius:32px;">
+                <img src="{{ user_profile.images[0].url }}" alt="Profile picture" class="w-16 h-16 rounded-full">
             {% endif %}
-            <span class="text-[#9eb7a8] text-lg">Welcome, {{ user_profile.display_name or user_profile.id }}!</span>
+            <span class="text-[#9eb7a8] text-lg text-center sm:text-left">Welcome, {{ user_profile.display_name or user_profile.id }}!</span>
         </div>
     {% endif %}
     <p class="text-[#9eb7a8]">You are logged in with Spotify.</p>
@@ -48,37 +48,36 @@
       {% else %}
         <h2 class="text-[#9eb7a8] text-2xl font-bold mb-4">Your Albums</h2>
         {% if albums %}
-          <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 list-none p-0" role="list" aria-label="Your saved albums">
+          <ul class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 list-none p-0" role="list" aria-label="Your saved albums">
             {% for album in albums %}
-              <li class="bg-[#181e1b] rounded-lg shadow hover:shadow-lg transition-shadow flex flex-col items-center p-4 focus-within:ring-2 focus-within:ring-[#38e07b]" tabindex="0">
+              <li class="bg-[#181e1b] rounded-lg shadow hover:shadow-lg transition-shadow flex flex-col items-center p-3 sm:p-4 focus-within:ring-2 focus-within:ring-[#38e07b]" tabindex="0">
                 <figure class="flex flex-col items-center w-full">
                   {% if album.album.images and album.album.images[0].url %}
                     <img src="{{ album.album.images[0].url }}"
                          alt="Album cover for {{ album.album.name }} by {{ album.album.artists[0].name }}"
-                         class="rounded w-full aspect-square object-cover mb-3"
-                         width="200" height="200"
+                         class="rounded w-full aspect-square object-cover mb-2 sm:mb-3"
+                         width="180" height="180"
                     >
                   {% endif %}
-
                   <figcaption class="text-center w-full">
-                    <span class="block text-lg font-semibold text-[#9eb7a8] truncate" title="{{ album.album.name }}">{{ album.album.name }}</span>
-                    <span class="block text-sm text-[#9eb7a8] truncate" title="{{ album.album.artists[0].name }}">{{ album.album.artists[0].name }}</span>
+                    <span class="block text-base sm:text-lg font-semibold text-[#9eb7a8] truncate" title="{{ album.album.name }}">{{ album.album.name }}</span>
+                    <span class="block text-xs sm:text-sm text-[#9eb7a8] truncate" title="{{ album.album.artists[0].name }}">{{ album.album.artists[0].name }}</span>
                   </figcaption>
                 </figure>
               </li>
             {% endfor %}
           </ul>
-          <div class="flex items-center justify-center gap-4 mt-6" role="navigation" aria-label="Album pagination">
+          <div class="flex flex-col xs:flex-row items-center justify-center gap-2 sm:gap-4 mt-6" role="navigation" aria-label="Album pagination">
             {% if prev_album_offset is not none %}
-              <button hx-get="{{ url_for('dashboard') }}?album_offset={{ prev_album_offset }}" hx-target="#albums-container" hx-swap="outerHTML" class="px-4 py-2 rounded bg-[#29382f] text-[#9eb7a8] focus:outline-none focus:ring-2 focus:ring-[#38e07b]" aria-label="Previous albums page">Previous</button>
+              <button hx-get="{{ url_for('dashboard') }}?album_offset={{ prev_album_offset }}" hx-target="#albums-container" hx-swap="outerHTML" class="px-4 py-2 rounded bg-[#29382f] text-[#9eb7a8] focus:outline-none focus:ring-2 focus:ring-[#38e07b] text-xs sm:text-base" aria-label="Previous albums page">Previous</button>
             {% endif %}
-            <span class="text-[#9eb7a8] text-base">Albums {{ album_offset + 1 }}-{{ album_offset + albums|length }} of {{ total_albums }}</span>
+            <span class="text-[#9eb7a8] text-xs sm:text-base">Albums {{ album_offset + 1 }}-{{ album_offset + albums|length }} of {{ total_albums }}</span>
             {% if next_album_offset is not none %}
-              <button hx-get="{{ url_for('dashboard') }}?album_offset={{ next_album_offset }}" hx-target="#albums-container" hx-swap="outerHTML" class="px-4 py-2 rounded bg-[#38e07b] text-[#181e1b] font-bold focus:outline-none focus:ring-2 focus:ring-[#38e07b]" aria-label="Next albums page">Next</button>
+              <button hx-get="{{ url_for('dashboard') }}?album_offset={{ next_album_offset }}" hx-target="#albums-container" hx-swap="outerHTML" class="px-4 py-2 rounded bg-[#38e07b] text-[#181e1b] font-bold focus:outline-none focus:ring-2 focus:ring-[#38e07b] text-xs sm:text-base" aria-label="Next albums page">Next</button>
             {% endif %}
           </div>
         {% else %}
-          <p>No albums found.</p>
+          <p class="text-xs sm:text-base">No albums found.</p>
         {% endif %}
       {% endif %}
     </div>
