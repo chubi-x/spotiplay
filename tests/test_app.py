@@ -160,6 +160,26 @@ def test_add_album_to_library_not_logged_in(client):
     resp = client.post('/add_album_to_library/A123')
     assert resp.status_code == 401
 
+def test_404_page(client):
+    resp = client.get('/no-such-route-xyz')
+    assert resp.status_code == 404
+    # Should include heading and SVG
+    assert b'404 Not Found' in resp.data
+    assert b'<svg' in resp.data
+    assert b'Back to Home' in resp.data
+
+
+def test_404_page_htmx_partial(client):
+    resp = client.get('/no-such-route-htmx', headers={'HX-Request':'true'})
+    assert resp.status_code == 404
+    assert b'404 Not Found' in resp.data
+    assert b'<svg' in resp.data
+    assert b'Back to Home' in resp.data
+    # Fragment should NOT contain <html> or <head>
+    assert b'<html' not in resp.data
+    assert b'<body' not in resp.data
+
+
 def test_logout(client):
     with client.session_transaction() as sess:
         sess['spotify_token'] = 'dummy_token'
@@ -167,5 +187,45 @@ def test_logout(client):
     assert resp.status_code == 200
     with client.session_transaction() as sess:
         assert 'spotify_token' not in sess
+
+
+def test_400_page(client):
+    resp = client.get('/trigger-400-error')  # This route should abort(400) in app.py for TDD
+    assert resp.status_code == 400
+    # Should include heading and SVG
+    assert b'400 Bad Request' in resp.data
+
+def test_400_page_htmx(client):
+    resp = client.get('/trigger-400-error', headers={'HX-Request': 'true'})
+    assert resp.status_code == 400
+    assert b'400 Bad Request' in resp.data
+    assert b'<svg' in resp.data
+    assert b'Back to Home' in resp.data
+
+def test_401_page(client):
+    resp = client.get('/trigger-401-error')  # This route should abort(401) in app.py for TDD
+    assert resp.status_code == 401
+    # Should include heading and SVG
+    assert b'401 Unauthorized' in resp.data
+
+def test_401_page_htmx(client):
+    resp = client.get('/trigger-401-error', headers={'HX-Request': 'true'})
+    assert resp.status_code == 401
+    assert b'401 Unauthorized' in resp.data
+    assert b'<svg' in resp.data
+    assert b'Back to Home' in resp.data
+    # Fragment should NOT contain <html> or <body>
+    assert b'<html' not in resp.data
+    assert b'<body' not in resp.data
+
+    assert b'<svg' in resp.data
+    assert b'Back to Home' in resp.data
+
+    # Fragment should NOT contain <html> or <body>
+    assert b'<html' not in resp.data
+    assert b'<body' not in resp.data
+
+    assert b'<svg' in resp.data
+    assert b'Back to Home' in resp.data
 
 
