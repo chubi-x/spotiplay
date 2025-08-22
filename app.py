@@ -69,6 +69,12 @@ def login():
 
 @app.route('/callback')
 def callback():
+    error = request.args.get('error')
+    if error == 'access_denied':
+        message = 'Spotify authorization was denied or revoked. Please login again to continue.'
+        if request.headers.get('HX-Request') == 'true':
+            return render_template('_401_fragment.html', message=message), 401
+        return render_template('base.html', content=render_template('_401_fragment.html', message=message)), 401
     code = request.args.get('code')
     token_url = SPOTIFY_API['auth']['token']
     payload = {
@@ -108,39 +114,10 @@ def dashboard():
     else:
         playlists = None
 
-    # Paginate user albums
-    try:
-        album_offset = int(request.args.get('album_offset', 0))
-    except ValueError:
-        album_offset = 0
-    album_limit = 20
-    albums, total_albums, next_album_offset, prev_album_offset = fetch_spotify_items_with_pagination(
-        SPOTIFY_API['user']['albums'],
-        session['spotify_token'],
-        offset=album_offset, limit=album_limit, item_key='items')
-
-    # Partial response for album pagination (HTMX)
-    if request.headers.get('HX-Request') == 'true':
-        return render_template(
-            '_albums_fragment.html',
-            albums=albums,
-            album_offset=album_offset,
-            album_limit=album_limit,
-            total_albums=total_albums,
-            next_album_offset=next_album_offset,
-            prev_album_offset=prev_album_offset
-        )
-
     return render_template(
         'dashboard.html',
         playlists=playlists,
-        albums=albums,
-        user_profile=user_profile,
-        album_offset=album_offset,
-        album_limit=album_limit,
-        total_albums=total_albums,
-        next_album_offset=next_album_offset,
-        prev_album_offset=prev_album_offset
+        user_profile=user_profile
     )
 
 
@@ -181,6 +158,7 @@ def playlist_detail(playlist_id):
     next_offset = None
     prev_offset = None
     saved_albums = {}
+    saved_tracks = {}
     if track_resp.status_code == 200:
         data = track_resp.json()
         for item in data.get('items', []):
@@ -198,11 +176,14 @@ def playlist_detail(playlist_id):
         # Extract unique album IDs to check if they're in the user's library
         unique_album_ids = []
         seen_album_ids = set()
+        track_ids = []
         for track in tracks:
             album = track.get('album')
             if album and album.get('id') and album['id'] not in seen_album_ids:
                 unique_album_ids.append(album['id'])
                 seen_album_ids.add(album['id'])
+            if track.get('id'):
+                track_ids.append(track['id'])
         
         # Check which albums are in the user's library
         saved_albums = {}
@@ -216,6 +197,17 @@ def playlist_detail(playlist_id):
                     results = check_resp.json()
                     for album_id, is_saved in zip(batch, results):
                         saved_albums[album_id] = is_saved
+        # Check which tracks are already saved (in Liked Songs)
+        saved_tracks = {}
+        if track_ids:
+            for i in range(0, len(track_ids), 50):
+                batch = track_ids[i:i+50]
+                check_url = f"https://api.spotify.com/v1/me/tracks/contains?ids={','.join(batch)}"
+                check_resp = requests.get(check_url, headers=headers)
+                if check_resp.status_code == 200:
+                    results = check_resp.json()
+                    for track_id, is_saved in zip(batch, results):
+                        saved_tracks[track_id] = is_saved
 
     template_name = '_tracks_fragment.html' if request.headers.get('HX-Request') == 'true' else 'playlist_detail.html'
     return render_template(
@@ -227,7 +219,8 @@ def playlist_detail(playlist_id):
         total_tracks=total_tracks, 
         next_offset=next_offset, 
         prev_offset=prev_offset,
-        saved_albums=saved_albums
+        saved_albums=saved_albums,
+        saved_tracks=saved_tracks
     )
 
 @app.route('/add_playlist_to_library/<playlist_id>', methods=['POST'])
