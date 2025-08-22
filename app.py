@@ -276,7 +276,10 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-@app.context_processor
+def inject_current_year():
+    return {'current_year': datetime.datetime.now().year}
+
+app.context_processor(inject_current_year)
 
 # Diagnostic test routes for error handling
 @app.route('/trigger-400-error')
@@ -286,9 +289,6 @@ def trigger_400_error():
 @app.route('/trigger-401-error')
 def trigger_401_error():
     abort(401, description="Unauthorized: test route for 401 error.")
-
-def inject_current_year():
-    return {'current_year': datetime.datetime.now().year}
 
 @app.errorhandler(404)
 def not_found(e):
@@ -301,7 +301,7 @@ def bad_request(e):
     message = getattr(e, 'description', None)
     if request.headers.get('HX-Request') == 'true':
         return render_template('_400_fragment.html', message=message), 400
-    return render_template('base.html', content=render_template('_400_fragment.html', message=message)), 400
+    return render_template('400.html', message=message), 400
 
 @app.errorhandler(401)
 def unauthorized(e):
