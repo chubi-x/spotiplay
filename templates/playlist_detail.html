@@ -1,18 +1,114 @@
 {% extends "base.html" %}
-{% block title %}Playlist Details{% endblock %}
+{% block title %}{{ playlist.name }} - Playlist{% endblock %}
 {% block content %}
-    <h1>{{ playlist.name }}</h1>
-    {% if playlist.images and playlist.images[0].url %}
-        <img src="{{ playlist.images[0].url }}" alt="cover" width="200">
-    {% endif %}
-    <p>{{ playlist.description }}</p>
-    <p>Total tracks: {{ playlist.tracks.total }}</p>
-    <form hx-post="/add_playlist_to_library/{{ playlist.id }}" hx-target="#add-all-result" hx-swap="innerHTML">
-        <button type="submit">Add All Tracks to Library</button>
+<div class="flex flex-wrap justify-between gap-3 p-4">
+  <div class="flex min-w-72 flex-col gap-3">
+    <div class="flex items-center gap-4">
+      {% if playlist.images and playlist.images[0].url %}
+        <img class="rounded-xl w-24 h-24 object-cover" src="{{ playlist.images[0].url }}" alt="Playlist cover">
+      {% else %}
+        <div class="w-24 h-24 rounded-xl bg-[#29382f] flex items-center justify-center">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-[#38e07b] w-16 h-16"><path d="M6 6H42L36 24L42 42H6L12 24L6 6Z" fill="currentColor"></path></svg>
+        </div>
+      {% endif %}
+      <div>
+        <p class="text-[#9eb7a8] text-sm font-normal leading-normal">
+          Playlist
+          {% if playlist.owner and playlist.owner.display_name %}· {{ playlist.owner.display_name }}{% endif %}
+        </p>
+        <p class="text-white tracking-light text-[32px] font-bold leading-tight">{{ playlist.name }}</p>
+        {% if playlist.description %}
+          <p class="text-[#9eb7a8] text-base font-normal leading-normal mt-1">{{ playlist.description }}</p>
+        {% endif %}
+        <p class="text-[#9eb7a8] text-sm font-normal leading-normal mt-1">{{ playlist.tracks.total }} tracks</p>
+      </div>
+    </div>
+    <form class="mt-4" hx-post="/add_playlist_to_library/{{ playlist.id }}" hx-target="#add-all-result" hx-swap="innerHTML">
+      <button type="submit" class="rounded-full bg-[#38e07b] text-[#111714] px-6 py-2 font-bold text-base shadow hover:bg-[#2ed16a] transition-colors">Add All Tracks to Library</button>
     </form>
-    <div id="add-all-result"></div>
-    <hr>
-    <h2>Tracks</h2>
-    {% include '_tracks_fragment.html' %}
+    <div id="add-all-result" class="mt-2"></div>
+  </div>
+</div>
+<div class="px-4 py-3 @container">
+  <div class="flex overflow-hidden rounded-xl border border-[#3d5245] bg-[#111714]">
+    <table class="flex-1">
+      <thead>
+        <tr class="bg-[#1c2620]">
+          <th class="px-4 py-3 text-left text-white w-[40px] text-sm font-medium leading-normal">#</th>
+          <th class="px-4 py-3 text-left text-white w-[400px] text-sm font-medium leading-normal">Title</th>
+          <th class="px-4 py-3 text-left text-white w-[300px] text-sm font-medium leading-normal">Album</th>
+          <th class="px-4 py-3 text-left text-white w-[140px] text-sm font-medium leading-normal">Date Added</th>
+          <th class="px-4 py-3 text-left text-white w-[80px] text-sm font-medium leading-normal">Duration</th>
+          <th class="px-4 py-3 text-left text-white w-[80px] text-sm font-medium leading-normal"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if tracks|length == 0 %}
+          <tr><td colspan="6" class="text-center text-[#9eb7a8] py-8">No tracks found.</td></tr>
+        {% else %}
+          {% set seen_albums = {} %}
+          {% for track in tracks %}
+            <tr class="border-t border-t-[#3d5245]">
+              <td class="h-[72px] px-4 py-2 text-white text-sm font-normal leading-normal">{{ loop.index0 + offset + 1 }}</td>
+              <td class="h-[72px] px-4 py-2 text-white text-sm font-normal leading-normal">
+                <div class="flex items-center gap-3">
+                  {% if track.album and track.album.images and track.album.images[0].url %}
+                    <img src="{{ track.album.images[0].url }}" alt="album cover" class="w-10 h-10 rounded-md object-cover">
+                  {% endif %}
+                  <div>
+                    <div class="font-bold">{{ track.name }}</div>
+                    <div class="text-[#9eb7a8] text-xs">{{ track.artists | map(attribute='name') | join(', ') }}</div>
+                  </div>
+                  {% if track.external_urls.spotify %}
+                    <a href="{{ track.external_urls.spotify }}" target="_blank" class="ml-2 text-[#38e07b] text-xs underline">Spotify</a>
+                  {% endif %}
+                </div>
+              </td>
+              <td class="h-[72px] px-4 py-2 text-[#9eb7a8] text-sm font-normal leading-normal">
+                {{ track.album.name if track.album else '' }}
+              </td>
+              <td class="h-[72px] px-4 py-2 text-[#9eb7a8] text-sm font-normal leading-normal">
+                {{ track.added_at[:10] if track.added_at }}
+              </td>
+              <td class="h-[72px] px-4 py-2 text-[#9eb7a8] text-sm font-normal leading-normal">
+                {% if track.duration_ms %}
+                  {% set minutes = (track.duration_ms // 60000) %}
+                  {% set seconds = ((track.duration_ms // 1000) % 60) %}
+                  {{ '%d:%02d' % (minutes, seconds) }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td class="h-[72px] px-4 py-2 text-white text-sm font-normal leading-normal">
+                <form hx-post="/add_track_to_library/{{ track.id }}" hx-target="#add-track-{{ track.id }}" hx-swap="innerHTML">
+                  <button type="submit" class="rounded-full bg-[#38e07b] text-[#111714] px-3 py-1 font-bold text-xs shadow hover:bg-[#2ed16a] transition-colors">Add</button>
+                </form>
+                <div id="add-track-{{ track.id }}"></div>
+                {% if track.album and track.album.id and track.album.id not in seen_albums and not saved_albums.get(track.album.id, False) %}
+                  {% set _ = seen_albums.update({track.album.id: True}) %}
+                  <form hx-post="/add_album_to_library/{{ track.album.id }}" hx-target="#add-album-{{ track.album.id }}" hx-swap="innerHTML" class="mt-1">
+                    <button type="submit" class="rounded-full bg-[#29382f] text-white px-3 py-1 font-bold text-xs shadow hover:bg-[#395645] transition-colors">Add Album</button>
+                  </form>
+                  <div id="add-album-{{ track.album.id }}"></div>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+  <div class="mt-6 flex items-center justify-between">
+    <div>
+      {% if prev_offset is not none %}
+        <button hx-get="{{ url_for('playlist_detail', playlist_id=playlist.id) }}?offset={{ prev_offset }}" hx-target="table" hx-swap="outerHTML" class="rounded-full bg-[#29382f] text-white px-4 py-2 font-bold text-xs shadow hover:bg-[#395645] transition-colors">Previous</button>
+      {% endif %}
+      {% if next_offset is not none %}
+        <button hx-get="{{ url_for('playlist_detail', playlist_id=playlist.id) }}?offset={{ next_offset }}" hx-target="table" hx-swap="outerHTML" class="ml-2 rounded-full bg-[#29382f] text-white px-4 py-2 font-bold text-xs shadow hover:bg-[#395645] transition-colors">Next</button>
+      {% endif %}
+    </div>
+    <span class="text-[#9eb7a8] text-xs font-medium">Tracks {{ offset + 1 }}-{{ offset + tracks|length }} of {{ total_tracks }}</span>
+  </div>
+</div>
 {% endblock %}
 
