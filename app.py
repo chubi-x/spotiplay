@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from flask import jsonify
 import requests
 import datetime
+import bleach
 
 # Spotify API URLs
 SPOTIFY_API = {
@@ -158,6 +159,19 @@ def playlist_detail(playlist_id):
     if playlist_resp.status_code != 200:
         abort(400, description="Failed to fetch playlist")
     playlist = playlist_resp.json()
+    # Sanitize playlist description for HTML links
+    if playlist.get('description'):
+        playlist['description_html'] = bleach.clean(
+            playlist['description'],
+            tags=['a'],
+            attributes={
+                'a': ['href', 'rel', 'target']
+            },
+            protocols=['http', 'https'],
+            strip=True
+        )
+    else:
+        playlist['description_html'] = ''
     # Fetch just one page of tracks
     tracks_url = f"{SPOTIFY_API['playlists']['tracks'].format(playlist_id=playlist_id)}?fields=items(track(id,name,artists,album,external_urls)),total,next,previous&offset={offset}&limit={limit}"
     track_resp = requests.get(tracks_url, headers=headers)

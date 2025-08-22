@@ -18,7 +18,7 @@
         </p>
         <p class="text-white tracking-light text-[32px] font-bold leading-tight">{{ playlist.name }}</p>
         {% if playlist.description %}
-          <p class="text-[#9eb7a8] text-base font-normal leading-normal mt-1">{{ playlist.description }}</p>
+          <p class="text-[#9eb7a8] text-base font-normal leading-normal mt-1">{{ playlist.description|safe }}</p>
         {% endif %}
         <p class="text-[#9eb7a8] text-sm font-normal leading-normal mt-1">{{ playlist.tracks.total }} tracks</p>
       </div>
