@@ -1,5 +1,4 @@
 #!/bin/bash
-# post-receive git hook for automatic deployment
 # Place this file in: /home/ubuntu/spotiplay.git/hooks/post-receive
 # Ensure it is executable: chmod +x post-receive
 
