@@ -4,9 +4,7 @@
 
 set -e
 
-USER=ubuntu
 DIR=/home/ubuntu/spotiplay
-SERVICE=spotiplay
 VENV="$DIR/.venv"
 SYSTEMD_SERVICE_FILE=spotiplay.service
 NGINX_CONF_FILE=spotiplay_nginx.conf
