@@ -17,12 +17,14 @@
                 </span>
                 {% if not saved_tracks.get(track.id, False) %}
                 <form hx-post="/add_track_to_library/{{ track.id }}" hx-swap="outerHTML">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <button type="submit" class="rounded-full bg-[#38e07b] text-[#111714] px-3 py-1 font-bold text-xs shadow hover:bg-[#2ed16a] transition-colors">Add</button>
                 </form>
                 {% endif %}
                 {% if track.album and track.album.id and track.album.id not in seen_albums and not saved_albums.get(track.album.id, False) %}
                     {% set _ = seen_albums.update({track.album.id: True}) %}
                     <form hx-post="/add_album_to_library/{{ track.album.id }}" hx-swap="outerHTML">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <button type="submit" class="rounded-full bg-[#29382f] text-white px-3 py-1 font-bold text-xs shadow hover:bg-[#395645] transition-colors">Add Album</button>
                     </form>
                 {% endif %}

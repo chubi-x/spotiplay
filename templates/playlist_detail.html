@@ -28,6 +28,7 @@
       </div>
     </div>
     <form class="mt-4" hx-post="/add_playlist_to_library/{{ playlist.id }}" hx-target="#add-all-result" hx-swap="innerHTML">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <button type="submit" class="rounded-full bg-[#38e07b] text-[#111714] px-6 py-2 font-bold text-base shadow hover:bg-[#2ed16a] transition-colors">Add All Tracks to Library</button>
     </form>
     <div id="add-all-result" class="mt-2"></div>

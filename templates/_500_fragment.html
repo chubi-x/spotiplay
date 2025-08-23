@@ -1,0 +1,15 @@
+<div class="flex flex-col items-center justify-center min-h-[320px] py-12">
+  <div class="mb-6">
+    <svg width="80" height="80" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-[#f87171]">
+      <circle cx="24" cy="24" r="22" fill="#181e1b" stroke="#f87171" stroke-width="4"/>
+      <path d="M24 12v16M24 34v2" stroke="#f87171" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <h1 class="text-4xl font-extrabold text-white mb-2">500 Server Error</h1>
+  <p class="text-lg text-[#9eb7a8] mb-4">Sorry, something went wrong on our server.</p>
+  {% if message %}
+  <p class="text-[#fca5a5] mb-6">{{ message }}</p>
+  {% endif %}
+  <a href="/dashboard" class="inline-block rounded-full bg-[#38e07b] text-[#111714] px-8 py-3 font-bold text-lg shadow-xl hover:bg-[#2ed16a] transition-colors">Back to Home</a>
+</div>
+
