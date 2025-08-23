@@ -1,10 +1,16 @@
 import os
-from flask import Flask, render_template, redirect, url_for, request, session, abort
-from dotenv import load_dotenv
-from flask import jsonify
-from flask_debugtoolbar import DebugToolbarExtension
-import requests
+import logging
+import logging.handlers
 import datetime
+import secrets
+
+from flask import (
+    Flask, render_template, redirect, url_for, request, 
+    session, abort, jsonify, send_from_directory
+)
+from dotenv import load_dotenv
+from flask_wtf.csrf import CSRFProtect
+import requests
 import bleach
 
 # Spotify API URLs
@@ -42,23 +48,88 @@ def fetch_spotify_items_with_pagination(endpoint, token, offset=0, limit=20, ite
     prev_offset = offset - limit if offset - limit >= 0 else (0 if offset > 0 else None)
     return items, total, next_offset, prev_offset
 
+# Load environment variables
 load_dotenv()
 
-SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
-SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
-SPOTIFY_REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI')
+# Application configuration
+class Config:
+    """Application configuration from environment variables with defaults."""
+    # Spotify API settings
+    SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
+    SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
+    SPOTIFY_REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI', 'http://localhost:5000/callback')
+    
+    # Flask settings
+    SECRET_KEY = os.getenv('SECRET_KEY', secrets.token_hex(24))
+    DEBUG = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+    PORT = int(os.getenv('PORT', 5000))
+    
+    # Logging settings
+    LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
+    LOG_DIR = os.getenv('LOG_DIR', 'logs')
+    LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    LOG_FILE = os.path.join(LOG_DIR, 'spotiplay.log')
+    LOG_MAX_BYTES = 10 * 1024 * 1024  # 10MB
+    LOG_BACKUP_COUNT = 5
+    
+    # Session settings
+    SESSION_COOKIE_SECURE = not DEBUG
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    PERMANENT_SESSION_LIFETIME = datetime.timedelta(days=1)
+    
+    # Debug toolbar settings
+    DEBUG_TB_ENABLED = DEBUG
+    DEBUG_TB_INTERCEPT_REDIRECTS = False
+    
+    @classmethod
+    def validate(cls):
+        """Validate that all required configuration is present."""
+        required = ['SPOTIFY_CLIENT_ID', 'SPOTIFY_CLIENT_SECRET']
+        missing = [key for key in required if not getattr(cls, key)]
+        if missing:
+            raise RuntimeError(f"Missing required configuration: {', '.join(missing)}")
 
+# Validate configuration
+Config.validate()
+
+# Set up the Flask application
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # Random session secret
-toolbar=DebugToolbarExtension(app)
+app.config.from_object(Config)
+app.secret_key = Config.SECRET_KEY
 
-from flask import send_from_directory
+# Initialize extensions
+csrf = CSRFProtect(app)
+
+# Set up handlers for logging
+handlers = [logging.StreamHandler()]
+
+# Always use file logging
+if not os.path.exists(Config.LOG_DIR):
+    os.makedirs(Config.LOG_DIR, exist_ok=True)
+    
+handlers.append(
+    logging.handlers.RotatingFileHandler(
+        Config.LOG_FILE, 
+        maxBytes=Config.LOG_MAX_BYTES, 
+        backupCount=Config.LOG_BACKUP_COUNT
+    )
+)
+
+# Configure logging
+logging.basicConfig(
+    level=getattr(logging, Config.LOG_LEVEL),
+    format=Config.LOG_FORMAT,
+    handlers=handlers
+)
+logger = logging.getLogger(__name__)
+logger.info("Application starting with configuration: DEBUG=%s", Config.DEBUG)
+
 
 @app.route('/favicon.ico')
 def favicon():
-    print("chefll")
     return send_from_directory(
-        os.path.join(app.root_path, 'static', "favicon"),
+        os.path.join(app.root_path, 'static'),
         'favicon.ico',
         mimetype='image/vnd.microsoft.icon'
     )
@@ -71,9 +142,9 @@ def login():
     scope = 'user-library-read user-library-modify playlist-read-private user-read-email'
     auth_url = (
         f'{SPOTIFY_API["auth"]["authorize"]}?'
-        f'client_id={SPOTIFY_CLIENT_ID}'
+        f'client_id={Config.SPOTIFY_CLIENT_ID}'
         f'&response_type=code'
-        f'&redirect_uri={SPOTIFY_REDIRECT_URI}'
+        f'&redirect_uri={Config.SPOTIFY_REDIRECT_URI}'
         f'&scope={scope.replace(" ", "+")}'
     )
     return redirect(auth_url)
@@ -91,9 +162,9 @@ def callback():
     payload = {
         'grant_type': 'authorization_code',
         'code': code,
-        'redirect_uri': SPOTIFY_REDIRECT_URI,
-        'client_id': SPOTIFY_CLIENT_ID,
-        'client_secret': SPOTIFY_CLIENT_SECRET
+        'redirect_uri': Config.SPOTIFY_REDIRECT_URI,
+        'client_id': Config.SPOTIFY_CLIENT_ID,
+        'client_secret': Config.SPOTIFY_CLIENT_SECRET
     }
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     response = requests.post(token_url, data=payload, headers=headers)
@@ -309,6 +380,10 @@ def trigger_400_error():
 def trigger_401_error():
     abort(401, description="Unauthorized: test route for 401 error.")
 
+@app.route('/trigger-500-error')
+def trigger_500_error():
+    abort(500, description="Server error: test route for 500 error.")
+
 @app.errorhandler(404)
 def not_found(e):
     if request.headers.get('HX-Request') == 'true':
@@ -328,8 +403,31 @@ def unauthorized(e):
         return render_template('_401_fragment.html'), 401
     return render_template('base.html', content=render_template('_401_fragment.html')), 401
 
+@app.errorhandler(500)
+def server_error(e):
+    message = getattr(e, 'description', None)
+    if request.headers.get('HX-Request') == 'true':
+        return render_template('_500_fragment.html', message=message), 500
+    return render_template('500.html', message=message), 500
+
 if __name__ == '__main__':
-    app.debug = True
-    app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
-    app.run(debug=True)
+    # Use Config class values for consistency
+    app.debug = Config.DEBUG
+    
+    # Only enable the debug toolbar in development
+    if Config.DEBUG:
+        app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
+        from flask_debugtoolbar import DebugToolbarExtension
+        toolbar = DebugToolbarExtension(app)
+    else:
+        app.config['DEBUG_TB_ENABLED'] = False
+    
+    # Set additional production configs when not in debug mode - use Config values
+    if not Config.DEBUG:
+        # These values are already set in app.config.from_object(Config) above,
+        # but we set them explicitly on the app instance for clarity
+        app.permanent_session_lifetime = Config.PERMANENT_SESSION_LIFETIME
+    
+    # Use Config.PORT instead of direct environment variable access
+    app.run(debug=Config.DEBUG, host='0.0.0.0', port=Config.PORT)
 
