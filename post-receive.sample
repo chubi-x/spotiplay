@@ -18,7 +18,7 @@ NGINX_LINK=/etc/nginx/sites-enabled/spotiplay
 git --work-tree="$APP_DIR" --git-dir="$APP_DIR.git" checkout -f
 
 echo "[post-receive] Installing hook..."
-sudo cp "$APP_DIR/post-receive" "$HOOK_DIR/hooks/post-receive"
+sudo cp "$APP_DIR/post-receive.sample" "$HOOK_DIR/hooks/post-receive"
 # Move systemd service file (requires sudo)
 echo "[post-receive] Installing systemd service..."
 sudo cp "$APP_DIR/$SYSTEMD_SERVICE" "$SYSTEMD_PATH"
