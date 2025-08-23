@@ -14,7 +14,6 @@ jobs:
       - name: Deploy on self-hosted runner
         run: |
           cd /home/ubuntu/spotiplay
-          git pull --ff-only
           chmod +x deploy.sh
           ./deploy.sh
 
