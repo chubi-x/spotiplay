@@ -11,7 +11,9 @@ jobs:
     steps:
       - name: Deploy on self-hosted runner
         run: |
-        [ ! -d '/home/ubuntu/spotiplay'] && git clone git@github.com:chubi-x/spotiplay /home/ubuntu/spotiplay
+          if [ ! -d /home/ubuntu/spotiplay ]; then
+            git clone git@github.com:chubi-x/spotiplay /home/ubuntu/spotiplay;
+          fi
           cd /home/ubuntu/spotiplay
           chmod +x deploy.sh
           ./deploy.sh
