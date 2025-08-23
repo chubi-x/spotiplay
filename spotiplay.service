@@ -1,0 +1,27 @@
+# Example systemd service file for Spotiplay Flask app
+# Save as /etc/systemd/system/spotiplay.service and edit paths as needed
+
+[Unit]
+Description=Spotiplay Flask App (Gunicorn)
+After=network.target
+
+[Service]
+User=www-data  # Change to your deployment user
+Group=www-data
+WorkingDirectory=/home/ubuntu/spotiplay
+
+# Optional: Path to your virtualenv
+Environment="PATH=/home/ubuntu/spotiplay/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+# Path to env file (edit as needed)
+EnvironmentFile=/home/ubuntu/spotiplay/.env
+
+ExecStart=/home/ubuntu/spotiplay/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:5000 app:app
+
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+SyslogIdentifier=spotiplay
+
+[Install]
+WantedBy=multi-user.target
+
