@@ -27,13 +27,9 @@ fi
 
 source "$VENV/bin/activate"
 
-if [ -f requirements-prod.txt ]; then
+if [ -f requirements/base.txt ]; then
 	echo "[deploy.sh] Installing prod requirements..."
-	uv pip install -r requirements-prod.txt
-else
-	echo "[deploy.sh] Installing requirements.txt..."
-	uv pip install -r requirements.txt
-fi
+	uv pip install -r requirements/base.txt
 
 echo "[deploy.sh] Installing systemd service file..."
 sudo cp "$DIR/$SYSTEMD_SERVICE_FILE" "$SYSTEMD_DEST"
