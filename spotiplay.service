@@ -11,11 +11,11 @@ Group=www-data
 WorkingDirectory=/home/ubuntu/spotiplay
 
 # Optional: Path to your virtualenv
-Environment="PATH=/home/ubuntu/spotiplay/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="PATH=/home/ubuntu/spotiplay/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 # Path to env file (edit as needed)
 EnvironmentFile=/home/ubuntu/spotiplay/.env
 
-ExecStart=/home/ubuntu/spotiplay/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:5000 app:app
+ExecStart=/home/ubuntu/spotiplay/.venv/bin/gunicorn --workers 3 --bind 127.0.0.1:5000 app:app
 
 Restart=always
 RestartSec=5
