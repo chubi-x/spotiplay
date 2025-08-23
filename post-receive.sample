@@ -1,4 +1,5 @@
 #!/bin/bash
+# post-receive git hook for automatic deployment
 # Place this file in: /home/ubuntu/spotiplay.git/hooks/post-receive
 # Ensure it is executable: chmod +x post-receive
 
@@ -6,6 +7,7 @@ set -e
 
 # Paths
 APP_DIR=/home/ubuntu/spotiplay
+HOOK_DIR=/home/ubuntu/spotiplay.git
 SYSTEMD_SERVICE=spotiplay.service
 NGINX_CONF=spotiplay_nginx.conf
 SYSTEMD_PATH=/etc/systemd/system/spotiplay.service
@@ -15,6 +17,8 @@ NGINX_LINK=/etc/nginx/sites-enabled/spotiplay
 # Update the working tree
 git --work-tree="$APP_DIR" --git-dir="$APP_DIR.git" checkout -f
 
+echo "[post-receive] Installing hook..."
+sudo cp "$APP_DIR/post-receive" "$HOOK_DIR/hooks/post-receive"
 # Move systemd service file (requires sudo)
 echo "[post-receive] Installing systemd service..."
 sudo cp "$APP_DIR/$SYSTEMD_SERVICE" "$SYSTEMD_PATH"
@@ -24,11 +28,13 @@ sudo systemctl daemon-reload
 echo "[post-receive] Installing nginx config..."
 sudo cp "$APP_DIR/$NGINX_CONF" "$NGINX_PATH"
 if [ ! -e "$NGINX_LINK" ]; then
-    sudo ln -s "$NGINX_PATH" "$NGINX_LINK"
+	sudo ln -s "$NGINX_PATH" "$NGINX_LINK"
 fi
 sudo nginx -t && sudo systemctl reload nginx
+
+# Ensure deploy.sh is executable
+chmod +x "$APP_DIR/deploy.sh"
 
 # Run deployment script
 cd "$APP_DIR"
 ./deploy.sh
-
