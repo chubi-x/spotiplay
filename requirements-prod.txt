@@ -1,9 +1,8 @@
 flask==2.3.3
 python-dotenv==1.0.0
 requests==2.31.0
-flask-debugtoolbar
-pytest
-bleach
-requests-mock
-gunicorn==21.2.0
+bleach==6.1.0
 Flask-WTF==1.2.1
+boto3==1.34.17
+aws-wsgi==0.2.7
+
