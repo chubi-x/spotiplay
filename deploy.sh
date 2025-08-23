@@ -17,7 +17,7 @@ NGINX_SYMLINK=/etc/nginx/sites-enabled/spotiplay
 cd "$DIR"
 source $HOME/.local/bin/env
 echo "[deploy.sh] Pulling latest changes..."
-git pull --ff-only
+git pull 
 
 if [ ! -d "$VENV" ]; then
 	echo "[deploy.sh] Creating venv..."
