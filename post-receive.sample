@@ -4,7 +4,6 @@
 # Ensure it is executable: chmod +x post-receive
 
 set -e
-
 # Paths
 APP_DIR=/home/ubuntu/spotiplay
 HOOK_DIR=/home/ubuntu/spotiplay.git
