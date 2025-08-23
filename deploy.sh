@@ -17,7 +17,7 @@ NGINX_SYMLINK=/etc/nginx/sites-enabled/spotiplay
 cd "$DIR"
 source $HOME/.local/bin/env
 echo "[deploy.sh] Pulling latest changes..."
-git pull 
+git pull
 
 if [ ! -d "$VENV" ]; then
 	echo "[deploy.sh] Creating venv..."
@@ -30,7 +30,7 @@ source "$VENV/bin/activate"
 if [ -f requirements/base.txt ]; then
 	echo "[deploy.sh] Installing prod requirements..."
 	uv pip install -r requirements/base.txt
-
+fi
 echo "[deploy.sh] Installing systemd service file..."
 sudo cp "$DIR/$SYSTEMD_SERVICE_FILE" "$SYSTEMD_DEST"
 sudo systemctl daemon-reload
