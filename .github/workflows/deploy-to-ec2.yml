@@ -9,10 +9,9 @@ jobs:
   deploy:
     runs-on: [self-hosted]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
       - name: Deploy on self-hosted runner
         run: |
+        [ ! -d '/home/ubuntu/spotiplay'] && git clone git@github.com:chubi-x/spotiplay /home/ubuntu/spotiplay
           cd /home/ubuntu/spotiplay
           chmod +x deploy.sh
           ./deploy.sh

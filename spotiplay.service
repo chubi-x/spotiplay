@@ -6,8 +6,8 @@ Description=Spotiplay Flask App (Gunicorn)
 After=network.target
 
 [Service]
-User=www-data  # Change to your deployment user
-Group=www-data
+User=ubuntu  # Change to your deployment user
+Group=ubuntu
 WorkingDirectory=/home/ubuntu/spotiplay
 
 # Optional: Path to your virtualenv

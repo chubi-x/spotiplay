@@ -5,6 +5,7 @@
 set -e
 
 DIR=/home/ubuntu/spotiplay
+SERVICE=spotiplay
 VENV="$DIR/.venv"
 SYSTEMD_SERVICE_FILE=spotiplay.service
 NGINX_CONF_FILE=spotiplay_nginx.conf
@@ -14,8 +15,6 @@ NGINX_SYMLINK=/etc/nginx/sites-enabled/spotiplay
 
 cd "$DIR"
 source $HOME/.local/bin/env
-echo "[deploy.sh] Pulling latest changes..."
-git pull
 
 if [ ! -d "$VENV" ]; then
 	echo "[deploy.sh] Creating venv..."
