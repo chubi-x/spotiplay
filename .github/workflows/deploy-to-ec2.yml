@@ -11,10 +11,13 @@ jobs:
     steps:
       - name: Deploy on self-hosted runner
         run: |
-          if [ ! -d /home/ubuntu/spotiplay ]; then
-            git clone git@github.com:chubi-x/spotiplay /home/ubuntu/spotiplay;
-          fi
           cd /home/ubuntu/spotiplay
+          git fetch
+          git checkout main
+          git pull --no-all
+          # if [ ! -d /home/ubuntu/spotiplay ]; then
+          #   git clone git@github.com:chubi-x/spotiplay /home/ubuntu/spotiplay;
+          # fi
           chmod +x deploy.sh
           ./deploy.sh
 
