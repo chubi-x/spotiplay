@@ -44,7 +44,7 @@ Spotiplay is a web application that lets users log in with their Spotify account
    pip install -r requirements.txt
    ```
 
-5. **Run the App**
+5. **Run the App (without Docker)**
    ```bash
    python app.py
    ```
