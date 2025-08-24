@@ -21,27 +21,27 @@ docker build -t $IMAGE_NAME .
 
 # Stop and remove old container if it exists
 if [ $(docker ps -aq -f name=^/$CONTAINER_NAME$) ]; then
-    echo "[deploy.sh] Stopping old container..."
-    docker stop $CONTAINER_NAME || true
-    echo "[deploy.sh] Removing old container..."
-    docker rm $CONTAINER_NAME || true
+	echo "[deploy.sh] Stopping old container..."
+	docker stop $CONTAINER_NAME || true
+	echo "[deploy.sh] Removing old container..."
+	docker rm $CONTAINER_NAME || true
 fi
 
 # Run new container
 echo "[deploy.sh] Running new container..."
 docker run -d --name $CONTAINER_NAME --restart unless-stopped \
-    -p 5000:5000 \
-    --env-file .env \
-    $IMAGE_NAME
+	-p 127.0.0.1:5000:5000 \
+	--env-file .env \
+	$IMAGE_NAME
 
 # (Optional) Nginx config for SSL/static proxy
 if [ -f "$DIR/$NGINX_CONF_FILE" ]; then
-    echo "[deploy.sh] Installing nginx config..."
-    sudo cp "$DIR/$NGINX_CONF_FILE" "$NGINX_DEST"
-    if [ ! -e "$NGINX_SYMLINK" ]; then
-        sudo ln -s "$NGINX_DEST" "$NGINX_SYMLINK"
-    fi
-    sudo nginx -t && sudo systemctl reload nginx
+	echo "[deploy.sh] Installing nginx config..."
+	sudo cp "$DIR/$NGINX_CONF_FILE" "$NGINX_DEST"
+	if [ ! -e "$NGINX_SYMLINK" ]; then
+		sudo ln -s "$NGINX_DEST" "$NGINX_SYMLINK"
+	fi
+	sudo nginx -t && sudo systemctl reload nginx
 fi
 
 echo "[deploy.sh] Deployment complete."
