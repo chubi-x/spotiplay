@@ -18,7 +18,7 @@ Spotiplay is a web application that lets users log in with their Spotify account
 1. **Clone the Repository**
 
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/chubi-x/spotiplay
    cd spotiplay
    ```
 
@@ -44,7 +44,7 @@ Spotiplay is a web application that lets users log in with their Spotify account
    pip install -r requirements.txt
    ```
 
-5. **Run the App (without Docker)**
+5. **Run the App 
    ```bash
    python app.py
    ```
